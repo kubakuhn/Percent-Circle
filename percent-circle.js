@@ -2,35 +2,36 @@
 class PercentCircle extends HTMLElement {
   constructor() {
     super();
-    // Template-Subscriptions / State
     this._unsubImageTpl = null;
-    this._lastImageTpl  = null;
+    this._lastImageTpl = null;
     this._initialImageTplFetched = false;
-
+  
     this._unsubPercentTpl = null;
-    this._lastPercentTpl  = null;
+    this._lastPercentTpl = null;
     this._initialPercentTplFetched = false;
-
+  
     this._lastConn = null;
-
-    // DOM-Refs
+    this._lastHass = null;          // <--- neu: letztes hass merken
+  
+    this._initialFetchRetries = 0;  // <--- neu: Retry-Zähler
+  
     this.svg = null;
     this.progressCircle = null;
     this.textEl = null;
     this.imgEl = null;
-
-    // Geometrie
+  
     this.radius = 0;
     this.circumference = 0;
-
-    // interner Prozentwert
     this._percent = 0;
   }
-
-  disconnectedCallback() {
-    // Beim Entfernen der Card: Subscriptions schließen
-    if (this._unsubImageTpl)   { try { this._unsubImageTpl(); } catch (_) {} this._unsubImageTpl = null; }
-    if (this._unsubPercentTpl) { try { this._unsubPercentTpl(); } catch (_) {} this._unsubPercentTpl = null; }
+  
+  connectedCallback() {
+    // Wenn das Element (z. B. im picture-elements) neu angehängt wird,
+    // gleich nochmal ein Update auslösen.
+    if (this._lastHass) {
+      // setTimeout, damit DOM steht bevor wir updaten
+      setTimeout(() => { try { this.hass = this._lastHass; } catch {} }, 0);
+    }
   }
 
   // -------------------- Helpers: Templates --------------------
@@ -38,8 +39,11 @@ class PercentCircle extends HTMLElement {
     try {
       const val = await hass.callWS({ type: "render_template", template });
       onValue?.(val);
+      this._initialFetchRetries = 0; // Reset
+      return true;
     } catch (e) {
       console.warn("[percent-circle] render_template (initial) failed:", e);
+      return false;
     }
   }
 
@@ -72,12 +76,10 @@ class PercentCircle extends HTMLElement {
         }
       } else {
         const num = this._toPercent(value);
-        this._applyPercent(num); // aktualisiert Ring + Text + Farbe
+        this._applyPercent(num);
       }
-    }, {
-      type: "render_template",
-      template: template,
-    });
+    }, { type: "render_template", template });
+
 
     this[lastTplKey] = template;
     this._lastConn = hass.connection;
@@ -121,6 +123,7 @@ class PercentCircle extends HTMLElement {
 
   // -------------------- HA Setter (synchron) --------------------
   set hass(hass) {
+    this._lastHass = hass;
     // EINMALIGES DOM-SETUP (kein Rebuild -> kein Flackern)
     if (!this.svg) {
       const size        = this.config?.size        ?? 120;        // px
@@ -214,30 +217,42 @@ class PercentCircle extends HTMLElement {
     const percentEntityId = this.config?.percent_entity || this.config?.entity;
 
     if (percentTpl) {
-      // Initial einmal den Template-Wert holen
-      if (!this._initialPercentTplFetched) {
-        this._fetchTemplateOnce(hass, percentTpl, (val) => {
-          this._applyPercent(this._toPercent(val));
-        });
-        this._initialPercentTplFetched = true;
+      // 1) Falls konstant (z. B. "{{ 30 }}"), sofort lokal setzen
+      const constMatch = String(percentTpl).match(/^\s*\{\{\s*([0-9]+(?:\.[0-9]+)?)\s*\}\}\s*$/);
+      if (constMatch) {
+        this._applyPercent(this._toPercent(constMatch[1]));
       }
 
-      // Live-Subscription für Template-Werte sicherstellen
+      // 2) Initialer Fetch – nur als "done" markieren, wenn er klappt
+      if (!this._initialPercentTplFetched) {
+        this._fetchTemplateOnce(hass, percentTpl, (val) => this._applyPercent(this._toPercent(val)))
+          .then((ok) => {
+            if (ok) {
+              this._initialPercentTplFetched = true;
+            } else {
+              // Retry mit kleinem Backoff, bis zu 5x
+              if (this._initialFetchRetries < 5) {
+                const delay = 150 * Math.pow(2, this._initialFetchRetries++); // 150,300,600,1200,2400ms
+                setTimeout(() => {
+                  if (this._lastHass) this.hass = this._lastHass;
+                }, delay);
+              }
+            }
+          });
+      }
+
+      // 3) Live-Subscription (liefert Änderungen nach)
       this._ensureTemplateSubscription(hass, percentTpl, "percent");
 
-      // 🔧 Soft-Fallback: Falls noch 0% (nichts sichtbar) und es gibt eine Entity,
-      // nimm den Entity-Wert als Start, bis das Template etwas liefert.
+      // 4) Soft-Fallback: solange 0% und es gibt eine Entity, nimm deren Wert
       if (this._percent === 0 && (this.config?.percent_entity || this.config?.entity)) {
         const pe = this.config.percent_entity || this.config.entity;
         const so = hass.states[pe];
         if (so) this._applyPercent(this._toPercent(so.state));
       }
     } else {
-      // Kein percent_template → ggf. percent_entity oder entity verwenden
-      if (this._unsubPercentTpl) {
-        try { this._unsubPercentTpl(); } catch (_) {}
-        this._unsubPercentTpl = null;
-      }
+      // Kein percent_template -> percent_entity / entity verwenden
+      if (this._unsubPercentTpl) { try { this._unsubPercentTpl(); } catch(_){} this._unsubPercentTpl = null; }
       this._lastPercentTpl = null;
       this._lastConn = hass.connection;
 
@@ -245,6 +260,7 @@ class PercentCircle extends HTMLElement {
       const stateStr = stateObj ? stateObj.state : "unavailable";
       this._applyPercent(this._toPercent(stateStr));
     }
+
 
     // ------- Bildquelle: image_template > image_entity > image -------
     const imageTpl = this.config?.image_template;

@@ -131,7 +131,8 @@ class PercentCircle extends HTMLElement {
       const textColor   = this.config?.color       ?? "#000";     // Textfarbe
       const trackColor  = this.config?.track_color ?? "#e0e0e0";  // Hintergrund-Ring
       const imgScale    = Math.max(0, Math.min(1, this.config?.image_scale ?? 0.8)); // 0..1
-      const useCard     = !this.config?.no_card;                  // für picture-elements
+      const useCard     = !this.config?.no_card;
+      const fitContainer = this.config?.fit === "container";
 
       const innerDiameter = size - stroke * 2;
       const imgBox = innerDiameter * imgScale;
@@ -152,7 +153,7 @@ class PercentCircle extends HTMLElement {
       this.innerHTML = `
         ${wrapperStart}
           <svg id="circleSvg"
-            width="${size}" height="${size}"
+            ${fitContainer ? 'width="100%" height="100%"' : `width="${size}" height="${size}"`}
             viewBox="${viewBox}"
             style="display:block; overflow:visible"
             preserveAspectRatio="xMidYMid meet">
@@ -198,7 +199,7 @@ class PercentCircle extends HTMLElement {
             --ha-card-box-shadow: none;
             overflow: visible;
           }` : ``}
-          .card-content { overflow: visible; }
+          .card-content { overflow: visible; ${fitContainer ? 'width:100%; height:100%;' : ''} }
         </style>
       `;
 

@@ -1,0 +1,13 @@
+{
+  "name": "Percent Circle",
+  "content_in_root": true,
+  "filename": "percent-circle.js",
+  "render_readme": true,
+  "hide_default_branch": false,
+  "domains": [],
+  "country": [],
+  "homeassistant": "2025.1.0",
+  "iot_class": "Local",
+  "persistent_directory": null,
+  "zip_release": false
+}

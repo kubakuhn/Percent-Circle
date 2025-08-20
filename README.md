@@ -46,22 +46,24 @@ Lade das Frontend neu (Cache leeren, Strg+F5 oder in der App → Profil → Cach
 
 ### ⚙️ Optionen
 
-|Name|Typ|Pflicht|Standard|Beschreibung|
-| ------- | --- | --- | --- | --- |
-|percent_entity|string|nein|–|Entity, die einen Wert 0–100 liefert|
-|percent_template|string|nein|–|Jinja-Template, das 0–100 liefert (Admin-User nötig)|
-|entity|string|nein|–|Fallback-Entity für Prozent|
-|image|string|nein|–|Statische Bild-URL|
-|image_entity|string|nein|–|Entity, deren State eine Bild-URL ist|
-|image_template|string|nein|–|Template für Bild-URL|
-|size|number|nein|120|Größe des Kreises in px|
-|stroke|number|nein|10|Linienbreite des Rings|
-|image_scale|number|nein|0.8|0–1, Verhältnis des Bilddurchmessers|
-|color|string|nein|#000|Textfarbe|
-|ring_color|string|nein|#03a9f4|Ringfarbe (Fallback, wenn keine thresholds)|
-|track_color|string|nein|#e0e0e0|Hintergrundringfarbe|
-|thresholds|list|nein|–|Schwellenwerte für Ringfarbe (siehe Beispiele)|
-|no_card|bool|nein|false|Rendert ohne <ha-card> (ideal für picture-elements)|
+| Name            | Typ     | Pflicht | Standard  | Beschreibung |
+| --------------- | ------- | ------- | --------- | ------------ |
+| percent_entity  | string  | nein    | –         | Entity, die einen Wert 0–100 liefert |
+| percent_template| string  | nein    | –         | Jinja-Template, das 0–100 liefert (Admin-User nötig) |
+| entity          | string  | nein    | –         | Fallback-Entity für Prozent |
+| image           | string  | nein    | –         | Statische Bild-URL |
+| image_entity    | string  | nein    | –         | Entity, deren State eine Bild-URL ist |
+| image_template  | string  | nein    | –         | Template für Bild-URL |
+| size            | number  | nein    | 120       | Größe des Kreises in px (Designgröße bei `fit: container`) |
+| stroke          | number  | nein    | 10        | Linienbreite des Rings |
+| image_scale     | number  | nein    | 0.8       | 0–1, Verhältnis des Bilddurchmessers |
+| color           | string  | nein    | #000      | Textfarbe |
+| ring_color      | string  | nein    | #03a9f4   | Ringfarbe (Fallback, wenn keine thresholds) |
+| track_color     | string  | nein    | #e0e0e0   | Hintergrundringfarbe |
+| thresholds      | list    | nein    | –         | Schwellenwerte für Ringfarbe (siehe Beispiele) |
+| no_card         | bool    | nein    | false     | Rendert ohne `<ha-card>` (ideal für picture-elements) |
+| fit             | string  | nein    | –         | `"container"` → SVG füllt den Container (`style: width/height` in % steuerbar) |
+
 
 ### 📚 Beispiele
 1) Einfach: Prozent aus Entity

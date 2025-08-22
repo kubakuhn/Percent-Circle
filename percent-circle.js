@@ -1,5 +1,5 @@
 // www/percent-circle.js
-console.log("[percent-circle] script loaded");
+console.info("%c PERCENT-CIRCLE %c ".concat("0.6.1", " "), "color: black; background: coral; font-weight: 700;", "color: black; background: white; font-weight: 700;");
 class PercentCircle extends HTMLElement {
   constructor() {
     super();
@@ -127,13 +127,13 @@ class PercentCircle extends HTMLElement {
     if (this._actionsWired) return;
     // Falls eine Aktion konfiguriert ist: Klicks annehmen
     if (this.config?.tap_action && this.config.tap_action.action) {
-	  this.style.cursor = "pointer";
-	  this.style.pointerEvents = "auto";
-	  this.addEventListener("click", (ev) => {
-	    ev.stopPropagation();
-	    this._handleTap();
-	  });
-	  this._actionsWired = true;
+    this.style.cursor = "pointer";
+    this.style.pointerEvents = "auto";
+    this.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      this._handleTap();
+    });
+    this._actionsWired = true;
     }
   }
 
@@ -142,16 +142,28 @@ class PercentCircle extends HTMLElement {
     if (!ta || !ta.action) return;
     // Nur 'call-service' abdecken (dein Use-Case)
     if (ta.action === "call-service" && ta.service && this._lastHass) {
-	  // 'domain.service' parsen
-	  const [domain, service] = String(ta.service).split(".", 2);
-	  const data = ta.service_data || ta.data || {};
-	  if (domain && service) {
-	    this._lastHass.callService(domain, service, data);
-	  } else {
-	    console.warn("[percent-circle] Invalid tap_action.service:", ta.service);
-	  }
+      // 'domain.service' parsen
+      const [domain, service] = String(ta.service).split(".", 2);
+      const data = ta.service_data || ta.data || {};
+      if (domain && service) {
+        this._lastHass.callService(domain, service, data);
+      } else {
+        console.warn("[percent-circle] Invalid tap_action.service:", ta.service);
+      }
+    } else if (ta.action === "navigate" && ta.navigation_path) {
+      history.pushState(null, "", ta.navigation_path);
+      window.dispatchEvent(new Event("location-changed"));
+
+    } else if (ta.action === "url" && ta.url_path) {
+      window.open(ta.url_path, ta.new_tab === false ? "_self" : "_blank");
+
+    } else if (ta.action === "more-info" && this._lastHass) {
+      const entityId = ta.entity || this.config?.entity || this.config?.percent_entity;
+      if (entityId) {
+        this._lastHass.fire("hass-more-info", { entityId });
+      }
+
     }
-    // Optional: weitere Actions (navigate, url, more-info) hier ergänzen
   }
 
   // -------------------- HA Setter (synchron) --------------------

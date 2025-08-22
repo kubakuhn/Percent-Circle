@@ -9,5 +9,5 @@
   "homeassistant": "2025.1.0",
   "iot_class": "Local",
   "persistent_directory": null,
-  "zip_release": false
+  "zip_release": true
 }

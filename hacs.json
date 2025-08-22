@@ -4,7 +4,7 @@
   "filename": "percent-circle.js",
   "render_readme": true,
   "hide_default_branch": false,
-  "domains": [],
+  "domain": "percent_circle",
   "country": [],
   "homeassistant": "2025.1.0",
   "iot_class": "Local",

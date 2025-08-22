@@ -23,6 +23,11 @@ Eine benutzerdefinierte Lovelace-Card für Home Assistant, die einen **runden Fo
 
 ### Via HACS (Custom Repository)
 
+<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=kubakuhn&repository=Percent-Circle&category=plugin" target="_blank" rel="noreferrer noopener">
+  <img src="https://my.home-assistant.io/badges/hacs_repository.svg"
+       alt="Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.">
+</a>
+
 1. Öffne **HACS → Frontend → Benutzerdefinierte Repositories**.
 2. Füge das Repository hinzu:  
    **URL**: `(https://github.com/kubakuhn/Percent-Circle/)`  

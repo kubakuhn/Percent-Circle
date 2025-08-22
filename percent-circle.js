@@ -1,10 +1,8 @@
 // www/percent-circle.js
+console.log("[percent-circle] script loaded");
 class PercentCircle extends HTMLElement {
   constructor() {
     super();
-	this.style.display = "block";       // width/height aus picture-elements wirken
-	this.style.pointerEvents = "auto";  // Klicks zulassen
-	this.style.touchAction = "manipulation"; // mobiles Tap-Verhalten
     this._unsubImageTpl = null;
     this._lastImageTpl = null;
     this._initialImageTplFetched = false;
@@ -26,7 +24,7 @@ class PercentCircle extends HTMLElement {
     this.radius = 0;
     this.circumference = 0;
     this._percent = 0;
-	this._actionsWired = false;
+    this._actionsWired = false;
   }
   
   connectedCallback() {

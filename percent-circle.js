@@ -2,6 +2,9 @@
 class PercentCircle extends HTMLElement {
   constructor() {
     super();
+	this.style.display = "block";       // width/height aus picture-elements wirken
+	this.style.pointerEvents = "auto";  // Klicks zulassen
+	this.style.touchAction = "manipulation"; // mobiles Tap-Verhalten
     this._unsubImageTpl = null;
     this._lastImageTpl = null;
     this._initialImageTplFetched = false;
@@ -23,6 +26,7 @@ class PercentCircle extends HTMLElement {
     this.radius = 0;
     this.circumference = 0;
     this._percent = 0;
+	this._actionsWired = false;
   }
   
   connectedCallback() {
@@ -121,6 +125,37 @@ class PercentCircle extends HTMLElement {
     if (this.textEl) this.textEl.textContent = `${percent}%`;
   }
 
+  _wireActions() {
+    if (this._actionsWired) return;
+    // Falls eine Aktion konfiguriert ist: Klicks annehmen
+    if (this.config?.tap_action && this.config.tap_action.action) {
+	  this.style.cursor = "pointer";
+	  this.style.pointerEvents = "auto";
+	  this.addEventListener("click", (ev) => {
+	    ev.stopPropagation();
+	    this._handleTap();
+	  });
+	  this._actionsWired = true;
+    }
+  }
+
+  _handleTap() {
+    const ta = this.config?.tap_action;
+    if (!ta || !ta.action) return;
+    // Nur 'call-service' abdecken (dein Use-Case)
+    if (ta.action === "call-service" && ta.service && this._lastHass) {
+	  // 'domain.service' parsen
+	  const [domain, service] = String(ta.service).split(".", 2);
+	  const data = ta.service_data || ta.data || {};
+	  if (domain && service) {
+	    this._lastHass.callService(domain, service, data);
+	  } else {
+	    console.warn("[percent-circle] Invalid tap_action.service:", ta.service);
+	  }
+    }
+    // Optional: weitere Actions (navigate, url, more-info) hier ergänzen
+  }
+
   // -------------------- HA Setter (synchron) --------------------
   set hass(hass) {
     this._lastHass = hass;
@@ -199,7 +234,7 @@ class PercentCircle extends HTMLElement {
             --ha-card-box-shadow: none;
             overflow: visible;
           }` : ``}
-          .card-content { overflow: visible; ${fitContainer ? 'width:100%; height:100%;' : ''} }
+          .card-content { overflow: visible; pointer-events: auto; ${fitContainer ? 'width:100%; height:100%;' : ''} }
         </style>
       `;
 
@@ -211,6 +246,8 @@ class PercentCircle extends HTMLElement {
 
       // static attribute
       this.progressCircle.setAttribute("stroke-dasharray", this.circumference);
+	  // Aktionen nach DOM-Setup aktivieren
+	  this._wireActions();
     }
 
     // ------- Prozentquelle: percent_template > percent_entity > entity -------
@@ -299,6 +336,9 @@ class PercentCircle extends HTMLElement {
       throw new Error("You need to define a percent source: percent_template or percent_entity/entity");
     }
     this.config = config;
+	// Actions ggf. neu verdrahten, falls Config geändert wurde
+	this._actionsWired = false;
+	if (this.svg) this._wireActions();
   }
 
   getCardSize() { return 3; }
